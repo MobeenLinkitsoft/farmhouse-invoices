@@ -2,6 +2,9 @@
   "name": "farmhouse-invoices",
   "version": "0.1.0",
   "private": true,
+  "overrides": {
+    "html2canvas": "npm:html2canvas-pro@latest"
+  },
   "scripts": {
     "dev": "next dev",
     "build": "next build",
@@ -9,6 +12,8 @@
     "lint": "eslint"
   },
   "dependencies": {
+    "html2canvas-pro": "^2.0.4",
+    "jspdf": "^4.2.1",
     "next": "16.2.9",
     "react": "19.2.4",
     "react-dom": "19.2.4"
