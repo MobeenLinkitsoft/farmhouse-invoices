@@ -14,13 +14,28 @@ export default function InvoiceGenerator() {
   const [slot, setSlot] = useState("");
 
   // Pricing State
-  const [bookingAmount, setBookingAmount] = useState(0);
-  const [advanceAmount, setAdvanceAmount] = useState(0);
-  const balance = bookingAmount - advanceAmount;
+  const [bookingAmount, setBookingAmount] = useState<number | "">("");
+  const [discountedAmount, setDiscountedAmount] = useState<number | "">("");
+  const [advanceAmount, setAdvanceAmount] = useState<number | "">("");
 
   // Farmhouse Specific State
   const [villa, setVilla] = useState("Platinum");
   const [instruction, setInstruction] = useState("");
+
+  // --- Calculations ---
+  const parsedBooking = Number(bookingAmount) || 0;
+  const parsedDiscounted = Number(discountedAmount) || 0;
+  const parsedAdvance = Number(advanceAmount) || 0;
+
+  // Only apply discount if a valid discounted price is entered and it's less than the original
+  const hasDiscount = parsedDiscounted > 0 && parsedDiscounted < parsedBooking;
+  const discountValue = hasDiscount ? parsedBooking - parsedDiscounted : 0;
+  
+  // Calculate percentage: (Difference / Original) * 100
+  const discountPercentage = hasDiscount ? ((discountValue / parsedBooking) * 100).toFixed(1) : "0.0";
+  
+  const finalBookingPrice = hasDiscount ? parsedDiscounted : parsedBooking;
+  const balance = finalBookingPrice - parsedAdvance;
 
   // --- Dynamic Theming ---
   const isGH = farmhouse === "Green Haven";
@@ -30,7 +45,7 @@ export default function InvoiceGenerator() {
   const themeLightBg = isGH ? "bg-green-50" : "bg-gray-100";
   const headerTextClass = isGH ? "text-white" : "text-yellow-500";
 
-  // Images (Make sure exact case matches your public folder files)
+  // Images 
   const headerImage = isGH ? "/2.jpeg" : "/1.jpeg";
   const qrImage = isGH ? "/qrgh.png" : "/qrtc.png";
 
@@ -74,7 +89,7 @@ export default function InvoiceGenerator() {
   };
 
   return (
-    <div className="min-h-screen bg-gray-100 p-4 lg:p-8 font-sans text-gray-800">
+    <div className="min-h-screen bg-gray-100 p-4 lg:p-8 font-sans text-gray-800 overflow-x-hidden">
       <div className="max-w-[90rem] mx-auto grid grid-cols-1 lg:grid-cols-12 gap-8">
         
         {/* LEFT COLUMN: FORM */}
@@ -141,14 +156,19 @@ export default function InvoiceGenerator() {
               <input type="text" placeholder="e.g. 10 Hours 8pm to 6am" className="w-full border border-gray-300 p-2.5 rounded" value={slot} onChange={(e) => setSlot(e.target.value)} />
             </div>
 
+            {/* Updated Pricing Section */}
             <div className="grid grid-cols-2 gap-4 border-t pt-4 mt-4">
               <div>
-                <label className="block text-sm font-semibold mb-1">Booking (PKR)</label>
-                <input type="number" className="w-full border border-gray-300 p-2.5 rounded" value={bookingAmount || ""} onChange={(e) => setBookingAmount(Number(e.target.value))} />
+                <label className="block text-sm font-semibold mb-1">Orig. Booking (PKR)</label>
+                <input type="number" className="w-full border border-gray-300 p-2.5 rounded" placeholder="e.g. 30000" value={bookingAmount} onChange={(e) => setBookingAmount(Number(e.target.value))} />
               </div>
               <div>
-                <label className="block text-sm font-semibold mb-1">Advance (PKR)</label>
-                <input type="number" className="w-full border border-gray-300 p-2.5 rounded" value={advanceAmount || ""} onChange={(e) => setAdvanceAmount(Number(e.target.value))} />
+                <label className="block text-sm font-semibold mb-1 text-green-700">Discounted Price</label>
+                <input type="number" className="w-full border border-gray-300 p-2.5 rounded" placeholder="Optional" value={discountedAmount} onChange={(e) => setDiscountedAmount(Number(e.target.value))} />
+              </div>
+              <div className="col-span-2">
+                <label className="block text-sm font-semibold mb-1">Advance Received (PKR)</label>
+                <input type="number" className="w-full border border-gray-300 p-2.5 rounded" value={advanceAmount} onChange={(e) => setAdvanceAmount(Number(e.target.value))} />
               </div>
             </div>
 
@@ -257,11 +277,24 @@ export default function InvoiceGenerator() {
                 <tbody className="text-gray-800">
                   <tr className="bg-white border-b border-gray-300">
                     <td className="p-3 font-semibold uppercase border-r border-gray-300 text-gray-700">Resort Booking</td>
-                    <td className="p-3 text-right font-medium">{bookingAmount.toLocaleString()}/-</td>
+                    <td className="p-3 text-right font-medium">{parsedBooking.toLocaleString()}/-</td>
                   </tr>
-                  <tr className="bg-gray-50 border-b border-gray-300">
-                    <td className="p-3 font-semibold uppercase border-r border-gray-300 text-gray-700">Advance</td>
-                    <td className="p-3 text-right font-medium text-red-600">- {advanceAmount.toLocaleString()}/-</td>
+                  
+                  {/* Dynamic Discount Row */}
+                  {hasDiscount && (
+                    <tr className="bg-green-50 border-b border-gray-300">
+                      <td className="p-3 font-semibold uppercase border-r border-gray-300 text-green-700">
+                        Discount ({discountPercentage}%)
+                      </td>
+                      <td className="p-3 text-right font-bold text-green-700">
+                        - {discountValue.toLocaleString()}/-
+                      </td>
+                    </tr>
+                  )}
+
+                  <tr className="bg-red-50 border-b border-gray-300">
+                    <td className="p-3 font-semibold uppercase border-r border-gray-300 text-gray-700">Advance Paid</td>
+                    <td className="p-3 text-right font-medium text-red-600">- {parsedAdvance.toLocaleString()}/-</td>
                   </tr>
                   <tr className="bg-white border-b border-gray-300">
                     <td className="p-3 font-semibold uppercase border-r border-gray-300 text-gray-700">Tax</td>
@@ -284,6 +317,7 @@ export default function InvoiceGenerator() {
                     <div className="text-sm space-y-1.5 text-gray-700">
                       <p><span className="font-bold text-gray-900">Bank Name:</span> Bank OF Punjab</p>
                       <p><span className="font-bold text-gray-900">Account No:</span> 2050439779800019</p>
+                      <p><span className="font-bold text-gray-900">IBAN No:</span> PK56BPUN2050439779800019</p>
                       <p><span className="font-bold text-gray-900">Title:</span> Green Haven Resort</p>
                     </div>
                   ) : (
