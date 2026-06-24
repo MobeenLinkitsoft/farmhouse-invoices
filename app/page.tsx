@@ -664,7 +664,7 @@ export default function InvoiceGenerator() {
                     </p>
                     <p className="mt-1">
                       For any queries, please contact our official resort
-                      number: 📞 +92 328 2329708
+                       number: 📞 +92 328 2329708 
                     </p>
                   </>
                 ) : (
