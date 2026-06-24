@@ -94,7 +94,7 @@ export default function InvoiceGenerator() {
       ? "text-yellow-500"
       : "text-white";
 
-  const headerImage = isGH ? "/2.jpeg" : isTC ? "/1.jpeg" : "/alrahman.jpg";
+  const headerImage = isGH ? "/2.jpeg" : isTC ? "/1.jpeg" : "/alrahman.jpeg";
   const qrImage = isGH ? "/qrgh.png" : isTC ? "/qrtc.png" : "/qrar.png";
 
   const socialHandle = isGH
