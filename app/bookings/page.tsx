@@ -9,6 +9,11 @@ type Booking = {
   farmhouse: string;
   villa?: string; 
   customer_name: string;
+  phone?: string;
+  cnic?: string;
+  booking_amount?: number;
+  advance_amount?: number;
+  balance_amount?: number;
   check_in_date: string;
   check_in_time: string;
   check_out_date: string;
@@ -110,14 +115,22 @@ export default function BookingManager() {
   const monthNames = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"];
 
   const getBookingsForDay = (day: number) => {
-    const checkDateStr = `${currentYear}-${String(currentMonth + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
-    const targetTime = new Date(`${checkDateStr}T12:00:00`).getTime(); 
+    const targetDateStr = `${currentYear}-${String(currentMonth + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
+    const targetTime = new Date(targetDateStr).getTime(); 
     
-    // We apply the Search & Farmhouse filters to the Calendar too!
     return filteredBookings.filter(b => {
-      const bStart = new Date(`${b.check_in_date}T00:00:00`).getTime(); 
-      const bEnd = new Date(`${b.check_out_date}T23:59:59`).getTime(); 
-      return targetTime >= bStart && targetTime <= bEnd;
+      const checkInTime = new Date(b.check_in_date).getTime();
+      const checkOutTime = new Date(b.check_out_date).getTime();
+      
+      // SMART DURATION LOGIC:
+      // If it's a standard overnight slot (<= 15 hours), ONLY show it on the check-in date
+      if (b.duration_hours && b.duration_hours <= 15) {
+        return b.check_in_date === targetDateStr;
+      } 
+      // If it's a multi-day 22-hour slot, show it on both check-in and check-out days
+      else {
+        return targetTime >= checkInTime && targetTime <= checkOutTime;
+      }
     });
   };
 
@@ -268,18 +281,44 @@ export default function BookingManager() {
                             </span>
                           </div>
                           
-                          <div className="bg-white/60 p-3 rounded-lg border border-white/40 mt-3 space-y-2">
-                            <div className="flex justify-between items-center text-sm">
-                              <span className="font-bold text-gray-500 uppercase text-[10px] tracking-wider">Check-in</span>
-                              <span className="font-bold text-gray-900">{formatDate(b.check_in_date)} @ {formatTime(b.check_in_time)}</span>
+                          <div className="bg-white/60 p-4 rounded-lg border border-white/40 mt-3 space-y-3">
+                            
+                            {/* Contact Details */}
+                            <div className="grid grid-cols-2 gap-2 text-sm border-b border-black/10 pb-3">
+                               <p className="font-semibold text-gray-700">📞 {b.phone || "N/A"}</p>
+                               <p className="font-semibold text-gray-700">🆔 {b.cnic || "N/A"}</p>
                             </div>
-                            <div className="flex justify-between items-center text-sm">
-                              <span className="font-bold text-gray-500 uppercase text-[10px] tracking-wider">Check-out</span>
-                              <span className="font-bold text-gray-900">{formatDate(b.check_out_date)} @ {formatTime(b.check_out_time)}</span>
+
+                            {/* Financial Details */}
+                            <div className="space-y-1.5 border-b border-black/10 pb-3">
+                              <div className="flex justify-between items-center text-sm">
+                                <span className="font-bold text-gray-500 uppercase text-[10px] tracking-wider">Total Booking</span>
+                                <span className="font-bold text-gray-900">{b.booking_amount || 0}/- PKR</span>
+                              </div>
+                              <div className="flex justify-between items-center text-sm">
+                                <span className="font-bold text-green-600 uppercase text-[10px] tracking-wider">Advance Paid</span>
+                                <span className="font-bold text-green-700">{b.advance_amount || 0}/- PKR</span>
+                              </div>
+                              <div className="flex justify-between items-center text-sm">
+                                <span className="font-bold text-red-500 uppercase text-[10px] tracking-wider">Balance Due</span>
+                                <span className="font-black text-red-600">{b.balance_amount || 0}/- PKR</span>
+                              </div>
                             </div>
-                            <div className="flex justify-between items-center text-sm pt-2 border-t border-black/10">
-                              <span className="font-bold text-gray-500 uppercase text-[10px] tracking-wider">Duration</span>
-                              <span className="font-black text-gray-900">{b.duration_hours} Hours</span>
+
+                            {/* Timeline */}
+                            <div className="space-y-1.5 pt-1">
+                              <div className="flex justify-between items-center text-sm">
+                                <span className="font-bold text-gray-500 uppercase text-[10px] tracking-wider">Check-in</span>
+                                <span className="font-bold text-gray-900">{formatDate(b.check_in_date)} @ {formatTime(b.check_in_time)}</span>
+                              </div>
+                              <div className="flex justify-between items-center text-sm">
+                                <span className="font-bold text-gray-500 uppercase text-[10px] tracking-wider">Check-out</span>
+                                <span className="font-bold text-gray-900">{formatDate(b.check_out_date)} @ {formatTime(b.check_out_time)}</span>
+                              </div>
+                              <div className="flex justify-between items-center text-sm pt-2 border-t border-black/5">
+                                <span className="font-bold text-gray-500 uppercase text-[10px] tracking-wider">Duration</span>
+                                <span className="font-black text-gray-900">{b.duration_hours} Hours</span>
+                              </div>
                             </div>
                           </div>
 
@@ -333,8 +372,30 @@ export default function BookingManager() {
                         </span>
                       </div>
 
+                      {/* Contact Info */}
+                      <div className="text-sm font-semibold text-gray-600 grid grid-cols-2 gap-2 mt-2 border-b border-gray-100 pb-3">
+                         <p>📞 {b.phone || "N/A"}</p>
+                         <p>🆔 {b.cnic || "N/A"}</p>
+                      </div>
+
+                      {/* Financials Row */}
+                      <div className="grid grid-cols-3 gap-2 text-center text-xs font-bold mb-1">
+                         <div className="bg-gray-50 p-2 rounded-lg border border-gray-200">
+                            <span className="block text-gray-400 uppercase text-[9px] mb-0.5">Booking</span>
+                            {b.booking_amount || 0}/-
+                         </div>
+                         <div className="bg-green-50 text-green-700 p-2 rounded-lg border border-green-200">
+                            <span className="block text-green-500 uppercase text-[9px] mb-0.5">Advance</span>
+                            {b.advance_amount || 0}/-
+                         </div>
+                         <div className="bg-red-50 text-red-700 p-2 rounded-lg border border-red-200">
+                            <span className="block text-red-400 uppercase text-[9px] mb-0.5">Balance</span>
+                            {b.balance_amount || 0}/-
+                         </div>
+                      </div>
+
                       {/* Timeline Data */}
-                      <div className="bg-gray-50 p-3 rounded-lg border border-gray-100 flex flex-col sm:flex-row justify-between gap-3 text-sm">
+                      <div className="bg-gray-50 p-3 rounded-lg border border-gray-100 flex flex-col sm:flex-row justify-between gap-3 text-sm mt-1">
                         <div>
                           <p className="text-[10px] text-gray-500 uppercase font-bold tracking-wider mb-0.5">Check-in</p>
                           <p className="font-bold text-gray-900">{formatDate(b.check_in_date)}</p>
@@ -354,7 +415,7 @@ export default function BookingManager() {
                       </div>
 
                       {/* Action Button */}
-                      <div className="flex justify-end pt-2">
+                      <div className="flex justify-end pt-1">
                         <button onClick={() => deleteBooking(b.id)} className="text-red-600 hover:text-white hover:bg-red-600 border border-red-200 font-bold text-xs px-4 py-2 rounded-lg transition w-full sm:w-auto">
                           Cancel Booking
                         </button>
