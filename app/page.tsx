@@ -40,15 +40,17 @@ export default function InvoiceGenerator() {
   const finalPrice = hasDiscount ? parsedDiscounted : parsedBooking;
   const balance = finalPrice - parsedAdvance;
 
-  // Formatting
+  // --- FORMATTING (Now includes Day of the week!) ---
   const formatDate = (d: string) =>
     d
       ? new Date(d).toLocaleDateString("en-US", {
+          weekday: "long", // This adds "Monday", "Tuesday", etc.
           day: "numeric",
           month: "short",
           year: "numeric",
         })
       : "—";
+
   const formatTime = (t: string) => {
     if (!t) return "";
     const [h, m] = t.split(":");
@@ -170,7 +172,6 @@ export default function InvoiceGenerator() {
         <div className="lg:col-span-4 bg-white p-6 rounded-lg shadow-sm border border-gray-200 h-fit lg:sticky lg:top-8">
           <div className="flex justify-between items-center mb-6 border-b pb-2">
             <h2 className="text-2xl font-bold">Invoice Details</h2>
-            {/* DIRECT LINK TO DASHBOARD - NO LOGIN REQUIRED */}
             <Link href="/bookings">
               <button className="bg-gray-800 hover:bg-black text-white text-[10px] px-3 py-1.5 rounded font-bold uppercase transition">
                 Dashboard →
@@ -430,6 +431,7 @@ export default function InvoiceGenerator() {
                   </span>
                   <span className="font-semibold">{cnic || "—"}</span>
                 </div>
+                {/* Updated Date rendering */}
                 <div>
                   <span className="block text-xs font-bold text-gray-500 uppercase mb-0.5">
                     Date
@@ -664,7 +666,7 @@ export default function InvoiceGenerator() {
                     </p>
                     <p className="mt-1">
                       For any queries, please contact our official resort
-                       number: 📞 +92 328 2329708 
+                      number: 📞 +92 328 2329708
                     </p>
                   </>
                 ) : (
