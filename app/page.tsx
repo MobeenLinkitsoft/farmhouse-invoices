@@ -40,11 +40,11 @@ export default function InvoiceGenerator() {
   const finalPrice = hasDiscount ? parsedDiscounted : parsedBooking;
   const balance = finalPrice - parsedAdvance;
 
-  // --- FORMATTING (Now includes Day of the week!) ---
+  // Formatting
   const formatDate = (d: string) =>
     d
       ? new Date(d).toLocaleDateString("en-US", {
-          weekday: "long", // This adds "Monday", "Tuesday", etc.
+          weekday: "long",
           day: "numeric",
           month: "short",
           year: "numeric",
@@ -62,11 +62,23 @@ export default function InvoiceGenerator() {
 
   let durationHours = 0;
   let formattedSlot = "—";
+  let slotType = "";
+
   if (checkInDate && checkInTime && checkOutDate && checkOutTime) {
     const start = new Date(`${checkInDate}T${checkInTime}`).getTime();
     const end = new Date(`${checkOutDate}T${checkOutTime}`).getTime();
     durationHours = Math.round((end - start) / (1000 * 60 * 60));
-    formattedSlot = `${durationHours > 0 ? durationHours + " Hours | " : ""}${formatTime(checkInTime)} to ${formatTime(checkOutTime)}`;
+
+    // Dynamic Slot Logic
+    if (durationHours >= 20) {
+      slotType = "Day + Night Slot";
+    } else {
+      const checkInHour = parseInt(checkInTime.split(":")[0], 10);
+      // Anything checking in between 6:00 AM and 5:59 PM is a Day Slot
+      slotType = (checkInHour >= 6 && checkInHour < 18) ? "Day Slot" : "Night Slot";
+    }
+
+    formattedSlot = `${durationHours > 0 ? `${durationHours} Hours (${slotType}) | ` : ""}${formatTime(checkInTime)} to ${formatTime(checkOutTime)}`;
   }
 
   // Theming
@@ -431,7 +443,6 @@ export default function InvoiceGenerator() {
                   </span>
                   <span className="font-semibold">{cnic || "—"}</span>
                 </div>
-                {/* Updated Date rendering */}
                 <div>
                   <span className="block text-xs font-bold text-gray-500 uppercase mb-0.5">
                     Date

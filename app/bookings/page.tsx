@@ -94,6 +94,14 @@ export default function BookingManager() {
     });
   };
 
+  const getSlotType = (checkInTime: string, durationHours: number) => {
+    if (!checkInTime) return "";
+    if (durationHours >= 20) return "Day + Night Slot";
+    const hour = parseInt(checkInTime.split(":")[0], 10);
+    if (hour >= 6 && hour < 18) return "Day Slot";
+    return "Night Slot";
+  };
+
   // --- FILTER LOGIC ---
   const getFilteredBookings = () => {
     return bookings.filter((b) => {
@@ -102,9 +110,12 @@ export default function BookingManager() {
         .toLowerCase()
         .includes(searchTerm.toLowerCase());
 
-      // 2. Farmhouse Filter
+      // 2. Farmhouse Filter (Now explicitly handling the split Twin Crown villas)
       const matchesFarmhouse =
-        filterFarmhouse === "All" || b.farmhouse === filterFarmhouse;
+        filterFarmhouse === "All" ||
+        (filterFarmhouse === "Twin Crown - Platinum" && b.farmhouse === "Twin Crown" && b.villa === "Platinum") ||
+        (filterFarmhouse === "Twin Crown - Gold" && b.farmhouse === "Twin Crown" && b.villa === "Gold") ||
+        b.farmhouse === filterFarmhouse;
 
       // 3. Date Filter
       let matchesDate = true;
@@ -226,7 +237,8 @@ export default function BookingManager() {
             >
               <option value="All">All Locations</option>
               <option value="Green Haven">Green Haven</option>
-              <option value="Twin Crown">Twin Crown</option>
+              <option value="Twin Crown - Platinum">Twin Crown - Platinum</option>
+              <option value="Twin Crown - Gold">Twin Crown - Gold</option>
               <option value="AL RAHMAN RETREAT">AL RAHMAN RETREAT</option>
             </select>
           </div>
@@ -285,7 +297,6 @@ export default function BookingManager() {
               </button>
             </div>
 
-            {/* Fully responsive Grid wrapper (Removed horizontal scroll & fixed width) */}
             <div className="w-full">
               <div className="grid grid-cols-7 gap-1 sm:gap-2 mb-2 text-center font-black text-gray-400 text-[10px] sm:text-xs uppercase tracking-widest bg-gray-50 p-1 sm:p-2 rounded-lg">
                 <div>
@@ -334,7 +345,7 @@ export default function BookingManager() {
                     <div
                       key={i}
                       onClick={() => setSelectedDayBookings(dayBookings)}
-                      className={`min-h-[70px] sm:min-h-[120px] p-1 sm:p-2 border sm:border-2 rounded-lg sm:rounded-xl cursor-pointer transition ${dayBookings.length > 0 ? "border-blue-200 bg-blue-50/50 hover:bg-blue-100" : "border-gray-100 hover:bg-gray-50"}`}
+                      className={`min-h-[70px] sm:min-h-[120px] p-1 sm:p-2 border sm:border-2 rounded-lg sm:rounded-xl cursor-pointer transition flex flex-col ${dayBookings.length > 0 ? "border-blue-200 bg-blue-50/50 hover:bg-blue-100" : "border-gray-100 hover:bg-gray-50"}`}
                     >
                       <div
                         className={`font-bold text-[10px] sm:text-sm mb-1 sm:mb-2 text-center sm:text-left ${dayBookings.length > 0 ? "text-blue-800" : "text-gray-400"}`}
@@ -342,7 +353,7 @@ export default function BookingManager() {
                         {i + 1}
                       </div>
 
-                      <div className="flex flex-col gap-1">
+                      <div className="flex flex-col gap-1 flex-grow">
                         {dayBookings.map((b) => {
                           const isGH = b.farmhouse === "Green Haven";
                           const isTC = b.farmhouse === "Twin Crown";
@@ -352,6 +363,7 @@ export default function BookingManager() {
                               ? "bg-gray-900"
                               : "bg-blue-600";
                           const initials = isGH ? "GH" : isTC ? "TC" : "AR";
+                          const slotType = getSlotType(b.check_in_time, b.duration_hours);
 
                           return (
                             <div
@@ -364,7 +376,7 @@ export default function BookingManager() {
                               <span className="hidden sm:block text-[10px] opacity-90 truncate">
                                 {initials}{" "}
                                 {b.villa ? `(${b.villa.charAt(0)})` : ""} •{" "}
-                                {b.duration_hours}h
+                                {slotType}
                               </span>
                             </div>
                           );
@@ -403,6 +415,7 @@ export default function BookingManager() {
                         : isTC
                           ? "bg-gray-200 text-gray-800 border-gray-300"
                           : "bg-blue-100 text-blue-800 border-blue-200";
+                      const slotType = getSlotType(b.check_in_time, b.duration_hours);
 
                       return (
                         <div
@@ -413,11 +426,16 @@ export default function BookingManager() {
                             <h4 className="font-black text-xl text-gray-900">
                               {b.customer_name}
                             </h4>
-                            <span
-                              className={`text-[10px] font-bold px-2.5 py-1 rounded-full border uppercase tracking-wider inline-block w-fit ${tagColor}`}
-                            >
-                              {b.farmhouse} {b.villa ? `- ${b.villa}` : ""}
-                            </span>
+                            <div className="flex flex-col gap-1 items-end">
+                              <span
+                                className={`text-[10px] font-bold px-2.5 py-1 rounded-full border uppercase tracking-wider inline-block w-fit ${tagColor}`}
+                              >
+                                {b.farmhouse} {b.villa ? `- ${b.villa}` : ""}
+                              </span>
+                              <span className="text-[10px] font-black uppercase bg-white border border-gray-200 px-2 py-0.5 rounded shadow-sm text-gray-700">
+                                {slotType} ({b.duration_hours}h)
+                              </span>
+                            </div>
                           </div>
 
                           <div className="bg-white/60 p-3 sm:p-4 rounded-lg border border-white/40 mt-3 space-y-3">
@@ -481,14 +499,6 @@ export default function BookingManager() {
                                   {formatTime(b.check_out_time)}
                                 </span>
                               </div>
-                              <div className="flex justify-between items-center text-sm pt-2 border-t border-black/5">
-                                <span className="font-bold text-gray-500 uppercase text-[10px] tracking-wider">
-                                  Duration
-                                </span>
-                                <span className="font-black text-gray-900">
-                                  {b.duration_hours} Hours
-                                </span>
-                              </div>
                             </div>
                           </div>
 
@@ -547,6 +557,7 @@ export default function BookingManager() {
                       ? "bg-gray-200 text-gray-800"
                       : "bg-blue-100 text-blue-800";
                   const isMultiDay = b.check_in_date !== b.check_out_date;
+                  const slotType = getSlotType(b.check_in_time, b.duration_hours);
 
                   return (
                     <div
@@ -566,7 +577,7 @@ export default function BookingManager() {
                           </span>
                         </div>
                         <span className="bg-indigo-50 text-indigo-700 font-black text-xs px-3 py-1.5 rounded-lg border border-indigo-100 whitespace-nowrap">
-                          {b.duration_hours} HRS
+                          {b.duration_hours}h • {slotType}
                         </span>
                       </div>
 
