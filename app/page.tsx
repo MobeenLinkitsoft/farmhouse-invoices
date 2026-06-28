@@ -12,6 +12,7 @@ export default function InvoiceGenerator() {
   const [customerName, setCustomerName] = useState("");
   const [phone, setPhone] = useState("");
   const [cnic, setCnic] = useState("");
+  const [personCount, setPersonCount] = useState<number | "">("");
 
   // Dates/Times
   const [checkInDate, setCheckInDate] = useState("");
@@ -158,6 +159,8 @@ export default function InvoiceGenerator() {
         customer_name: customerName,
         phone,
         cnic,
+        // Optional: Include person count in sync if you add this column to your database
+        // person_count: personCount || null, 
         check_in_date: checkInDate,
         check_in_time: checkInTime,
         check_out_date: checkOutDate,
@@ -251,14 +254,26 @@ export default function InvoiceGenerator() {
               </div>
             </div>
 
-            <div>
-              <label className="block text-sm font-semibold mb-1">CNIC</label>
-              <input
-                type="text"
-                className="w-full border p-2.5 rounded outline-none"
-                value={cnic}
-                onChange={(e) => setCnic(e.target.value)}
-              />
+            <div className="grid grid-cols-2 gap-4">
+              <div>
+                <label className="block text-sm font-semibold mb-1">CNIC</label>
+                <input
+                  type="text"
+                  className="w-full border p-2.5 rounded outline-none"
+                  value={cnic}
+                  onChange={(e) => setCnic(e.target.value)}
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-semibold mb-1">Person Count</label>
+                <input
+                  type="number"
+                  min="1"
+                  className="w-full border p-2.5 rounded outline-none"
+                  value={personCount}
+                  onChange={(e) => setPersonCount(e.target.value ? Number(e.target.value) : "")}
+                />
+              </div>
             </div>
 
             <div className="p-3 bg-gray-50 border rounded-lg">
@@ -445,6 +460,12 @@ export default function InvoiceGenerator() {
                 </div>
                 <div>
                   <span className="block text-xs font-bold text-gray-500 uppercase mb-0.5">
+                    Persons
+                  </span>
+                  <span className="font-semibold">{personCount || "—"}</span>
+                </div>
+                <div>
+                  <span className="block text-xs font-bold text-gray-500 uppercase mb-0.5">
                     Date
                   </span>
                   <span className="font-semibold">
@@ -620,7 +641,8 @@ export default function InvoiceGenerator() {
                   Policies & Terms
                 </p>
               </div>
-              <div className="mb-8">
+              
+              <div className="mb-6">
                 <h4 className={`font-bold uppercase mb-4 text-lg ${themeText}`}>
                   Terms & Conditions
                 </h4>
@@ -648,7 +670,18 @@ export default function InvoiceGenerator() {
                   </li>
                 </ul>
               </div>
-              <div className={`mt-8 ${themeLightBg} border rounded-lg p-6`}>
+
+              {/* NEW SPECIAL INSTRUCTION BLOCK */}
+              <div className={`mb-8 p-4 border-l-4 rounded-r-lg ${themeLightBg} ${themeBorder}`}>
+                <h4 className={`font-bold uppercase mb-2 text-md ${themeText}`}>
+                  Special Instruction
+                </h4>
+                <p className="font-semibold text-sm">
+                  Up to 50 persons allowed. After 50 persons, an additional charge of 2,000 per person will be applicable.
+                </p>
+              </div>
+
+              <div className={`mt-auto ${themeLightBg} border rounded-lg p-6`}>
                 <div className="flex gap-6 text-xs font-bold uppercase justify-center mb-4">
                   <span>Facebook: @{socialHandle}</span>
                   <span>Instagram: @{socialHandle}</span>
@@ -659,9 +692,8 @@ export default function InvoiceGenerator() {
                   {supervisorContact}
                 </div>
               </div>
-              <div className="flex-grow"></div>
               <div
-                className={`text-center text-xs border-t-2 ${themeBorder} pt-6 font-bold tracking-wide`}
+                className={`text-center text-xs border-t-2 ${themeBorder} pt-6 font-bold tracking-wide mt-8`}
               >
                 {isGH ? (
                   <p>
